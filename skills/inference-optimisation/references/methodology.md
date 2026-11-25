@@ -34,9 +34,9 @@ Most "wins" and "regressions" in inference tuning are measurement errors. Each c
 
 ## Shared hosts
 
-- An idle box is often unavailable. Book the accelerator plus a fixed core set (cpuset, cgroup, scheduler reservation); keep the arm and its controls in one booking.
-- Record host load through every run: busy cores outside your set, page cache held by the model file, clocks, other accelerator users. A CPU expert tier ran 7.07 tok/s quiet, 4.37 with 9–19 other busy cores; losing page cache tripled its dispatch time.
-- When load changes mid-run, mark the run CONTAMINATED from then and keep the clean span. Once a booking ended mid-run and other-core load went 1.3 → 20.7 (median); the clean first half still confirmed the mechanism, and the rest was reported as contaminated, not deleted.
+- An idle box is often unavailable. Book the accelerator plus a cpuset you can read back per process; a reservation or cgroup weight reserves capacity, not cores, so such a run is shared: record the contention. Keep the arm and its controls in one booking.
+- Record host load through every run: busy cores outside your set, page cache held by the model file, clocks, other accelerator users. On one machine (illustrative): a CPU expert tier ran 7.07 tok/s quiet and 4.37 with 9–19 other busy cores, and losing page cache tripled its dispatch time.
+- When load changes mid-run, mark the run CONTAMINATED from then and keep the clean span. Once a booking ended mid-run (other-core load 1.3 → 20.7 median); the clean first half still confirmed the mechanism and the rest was kept, labelled contaminated.
 
 ## Speculative decoding specifics
 

@@ -172,14 +172,22 @@ def run(cfg_path, long_ctx=None, skip_cn=False, reps=6):
         deadline, next_note = t0 + cfg.get("health_timeout_s", 900), t0 + 30
         while not srv.healthy():
             now = time.monotonic()
-            if cfg.get("alive") and subprocess.run(cfg["alive"], capture_output=True).returncode != 0:
-                res.update(ok=False, error=f"server exited before becoming healthy ({now - t0:.0f} s)")
-                stop_server()
-                return finish(res, flags, watch)
             if now > deadline or (watch and watch.tripped):
                 res.update(ok=False, error=f"server did not become healthy in {now - t0:.0f} s")
                 stop_server()
                 return finish(res, flags, watch)
+            if cfg.get("alive"):
+                budget = min(cfg.get("alive_timeout_s", 10), max(1.0, deadline - now))
+                try:
+                    dead = subprocess.run(cfg["alive"], capture_output=True, timeout=budget).returncode != 0
+                    why = "liveness probe says the server exited"
+                except subprocess.TimeoutExpired:
+                    dead, why = False, None  # a slow probe is not a dead server; the deadline still applies
+                    log(f"liveness probe timed out after {budget:.0f} s; continuing until the deadline")
+                if dead:
+                    res.update(ok=False, error=f"{why} before becoming healthy ({now - t0:.0f} s)")
+                    stop_server()
+                    return finish(res, flags, watch)
             if now >= next_note:
                 log(f"waiting for health: {now - t0:.0f} s of {cfg.get('health_timeout_s', 900)}")
                 next_note += 30

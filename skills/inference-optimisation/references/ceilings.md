@@ -49,7 +49,7 @@ floor_c(R) = max(bytes_c(R) / bandwidth, flops_c(R) / peak_flops)     # full ove
 
 `bytes_c` counts shared weights once a step and per-row data (KV, state, distinct experts) per row. Time each component (profiler, stage stamps), report `floor_c / measured_c` for each, and attribute wall time outside any component (gaps, host stalls, prompt rows) separately.
 
-Example (two GPUs, a pipelined MoE pool serving 32 coding agents): the pool ran at 23–30% of a 735–980 tok/s roofline. Only ~40% of a stage's wall was decode rows (17% fixed per step, 20% prompt rows, 21% gaps), and a decode step cost 1.8–2.4× its floor. The capacity plan priced each extra row at its new bytes and forgot its FLOPs (~0.3 ms a row per stage at the measured GEMM rate). No single item was worth 2×: the per-component table says so, the total does not.
+Illustrative example (two GPUs, a pipelined MoE pool serving 32 coding agents): the pool ran at 23–30% of a 735–980 tok/s roofline. Only ~40% of a stage's wall was decode rows (17% fixed per step, 20% prompt rows, 21% gaps), and a decode step cost 1.8–2.4× its floor. The capacity plan priced each extra row at its new bytes and forgot its FLOPs (~0.3 ms a row per stage at the measured GEMM rate). No single item was worth 2×: the per-component table says so, the total does not.
 
 ## TTFT, startup, KV
 
